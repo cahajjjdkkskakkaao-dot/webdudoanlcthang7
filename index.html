@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casino Analytics V20</title>
+    <title>Tool Lc79 Active</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #0b0e14; color: #e2e8f0; font-family: 'Inter', sans-serif; }
@@ -13,30 +14,59 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-3xl mx-auto">
-        <header class="card p-6 rounded-2xl mb-6 flex justify-between items-center">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="card p-6 rounded-2xl mb-6 flex justify-between items-center shadow-lg">
             <div>
-                <h1 class="text-xl font-bold gradient-text">CASINO ANALYTICS</h1>
-                <p class="text-xs text-gray-500" id="meta-info">Đang khởi tạo...</p>
+                <h1 class="text-xl md:text-2xl font-bold gradient-text uppercase tracking-wider">Hệ Thống Phân Tích Casino</h1>
+                <p class="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                    <span id="meta-info">Đang khởi tạo...</span>
+                </p>
             </div>
-            <div id="status" class="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 hidden md:inline" id="status-text">Đang kết nối</span>
+                <div id="status" class="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card p-6 rounded-2xl">
-                <p class="text-gray-400 text-sm">Phiên hiện tại</p>
-                <h2 class="text-3xl font-black text-white" id="phien">#-------</h2>
+        <!-- Main Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Phiên hiện tại -->
+            <div class="card p-6 rounded-2xl flex flex-col justify-center items-center text-center relative overflow-hidden">
+                <div class="absolute top-0 w-full h-1 bg-gray-700"></div>
+                <p class="text-gray-400 text-sm mb-2">Phiên hiện tại</p>
+                <h2 class="text-3xl font-black text-white tracking-wider" id="phien">#-------</h2>
             </div>
-            <div class="card p-6 rounded-2xl">
-                <p class="text-gray-400 text-sm">Lịch sử đúng/sai</p>
-                <h2 class="text-2xl font-bold text-blue-400" id="dung-sai">--</h2>
+            
+            <!-- Kết quả vừa ra -->
+            <div class="card p-6 rounded-2xl flex flex-col justify-center items-center text-center relative overflow-hidden">
+                <div class="absolute top-0 w-full h-1 bg-yellow-500/50"></div>
+                <p class="text-gray-400 text-sm mb-2">Kết quả vừa ra</p>
+                <h2 class="text-2xl font-bold text-yellow-400" id="kq-vua-ra">---</h2>
+            </div>
+
+            <!-- Lịch sử Đúng/Sai -->
+            <div class="card p-6 rounded-2xl flex flex-col justify-center items-center text-center relative overflow-hidden">
+                <div class="absolute top-0 w-full h-1 bg-green-500/50"></div>
+                <p class="text-gray-400 text-sm mb-2">Lịch sử đúng/sai</p>
+                <h2 class="text-2xl font-bold text-green-400" id="dung-sai">-- Đúng | -- Sai</h2>
             </div>
         </div>
 
-        <div class="card p-6 rounded-2xl mt-6 border-l-4 border-blue-500">
-            <p class="text-gray-400 text-xs uppercase tracking-widest">Lệnh chốt phiên tới</p>
-            <h3 class="text-5xl font-black my-4" id="cua-vao">---</h3>
-            <p class="text-sm text-gray-300 italic" id="ly-do">---</p>
+        <!-- Strategy Box -->
+        <div class="card p-8 rounded-2xl mt-6 border-l-4 border-blue-500 relative overflow-hidden shadow-2xl">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 blur-3xl rounded-full"></div>
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Lệnh chốt cho phiên tới</p>
+                    <p class="text-lg text-gray-300 font-mono">Phiên đánh: <span id="phien-danh" class="text-white font-bold">#-------</span></p>
+                </div>
+                <div class="text-left md:text-right w-full md:w-auto bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                    <p class="text-xs text-gray-500 uppercase mb-1">Dự đoán</p>
+                    <h3 class="text-5xl md:text-6xl font-black" id="cua-vao">WAIT</h3>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -46,33 +76,64 @@
         let isFetching = false;
 
         async function updateDashboard() {
+            // Ngăn chặn gọi API chồng chéo nếu mạng chậm
             if (isFetching) return;
             isFetching = true;
             
             const statusEl = document.getElementById('status');
+            const statusText = document.getElementById('status-text');
+
             try {
-                const response = await fetch(PROXY + encodeURIComponent(API_URL));
+                // Thêm Date.now() để chống cache hoàn toàn từ trình duyệt/proxy
+                const fetchUrl = PROXY + encodeURIComponent(API_URL + '?t=' + Date.now());
+                const response = await fetch(fetchUrl);
+                
+                if (!response.ok) throw new Error("Mất kết nối server");
                 const data = await response.json();
 
-                document.getElementById('meta-info').innerText = `${data.meta.tac_gia} | ${data.meta.phien_ban}`;
-                document.getElementById('phien').innerText = `#${data.phien_hien_tai}`;
-                document.getElementById('dung-sai').innerText = data.lich_su_dung_sai;
-                document.getElementById('cua-vao').innerText = data.lenh_chot_phien_toi.cua_vao;
-                document.getElementById('ly-do').innerText = data.lenh_chot_phien_toi.ly_do;
+                // Cập nhật Header
+                document.getElementById('meta-info').innerText = `${data.meta.tac_gia || 'Ẩn'} | ${data.meta.phien_ban || 'V1'}`;
                 
-                const cua = data.lenh_chot_phien_toi.cua_vao;
-                document.getElementById('cua-vao').className = `text-5xl font-black my-4 ${cua === 'Tài' ? 'text-red-500' : (cua === 'Xỉu' ? 'text-blue-500' : 'text-gray-500')}`;
+                // Cập nhật Grid Thông tin
+                document.getElementById('phien').innerText = `#${data.phien_hien_tai}`;
+                document.getElementById('kq-vua-ra').innerText = data.ket_qua_vua_ra || "---";
+                document.getElementById('dung-sai').innerText = data.lich_su_dung_sai || "---";
+                
+                // Cập nhật Lệnh chốt
+                if (data.lenh_chot_phien_toi) {
+                    document.getElementById('phien-danh').innerText = `#${data.lenh_chot_phien_toi.phien_danh}`;
+                    
+                    const cua = data.lenh_chot_phien_toi.cua_vao || "SKIP";
+                    const cuaEl = document.getElementById('cua-vao');
+                    cuaEl.innerText = cua;
+                    
+                    // Xử lý màu sắc dựa trên chữ TÀI / XỈU
+                    const textUpper = cua.toUpperCase();
+                    if (textUpper.includes('TAI') || textUpper.includes('TÀI')) {
+                        cuaEl.className = "text-5xl md:text-6xl font-black text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+                    } else if (textUpper.includes('XIU') || textUpper.includes('XỈU')) {
+                        cuaEl.className = "text-5xl md:text-6xl font-black text-blue-500 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]";
+                    } else {
+                        cuaEl.className = "text-5xl md:text-6xl font-black text-gray-500";
+                    }
+                }
 
-                statusEl.className = "w-3 h-3 rounded-full bg-green-500";
+                // Cập nhật trạng thái
+                statusEl.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]";
+                statusText.innerText = "Trực tuyến";
             } catch (err) {
-                statusEl.className = "w-3 h-3 rounded-full bg-red-500";
+                console.error("Fetch Error:", err);
+                statusEl.className = "w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]";
+                statusText.innerText = "Mất kết nối";
             } finally {
                 isFetching = false;
             }
         }
 
-        // Cập nhật mỗi 1000ms (1 giây)
+        // Cập nhật siêu tốc mỗi 1000ms (1 giây)
         setInterval(updateDashboard, 1000);
+        
+        // Gọi ngay lần đầu khi load trang
         updateDashboard();
     </script>
 </body>
