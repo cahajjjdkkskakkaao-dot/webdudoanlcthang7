@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Analytics V20</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0b0e14; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .card { background: #151921; border: 1px solid #2d3748; }
+        .gradient-text { background: linear-gradient(90deg, #60a5fa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-3xl mx-auto">
+        <header class="card p-6 rounded-2xl mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold gradient-text">CASINO ANALYTICS</h1>
+                <p class="text-xs text-gray-500" id="meta-info">Đang khởi tạo...</p>
+            </div>
+            <div id="status" class="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card p-6 rounded-2xl">
+                <p class="text-gray-400 text-sm">Phiên hiện tại</p>
+                <h2 class="text-3xl font-black text-white" id="phien">#-------</h2>
+            </div>
+            <div class="card p-6 rounded-2xl">
+                <p class="text-gray-400 text-sm">Lịch sử đúng/sai</p>
+                <h2 class="text-2xl font-bold text-blue-400" id="dung-sai">--</h2>
+            </div>
+        </div>
+
+        <div class="card p-6 rounded-2xl mt-6 border-l-4 border-blue-500">
+            <p class="text-gray-400 text-xs uppercase tracking-widest">Lệnh chốt phiên tới</p>
+            <h3 class="text-5xl font-black my-4" id="cua-vao">---</h3>
+            <p class="text-sm text-gray-300 italic" id="ly-do">---</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://lcnewthang7.onrender.com/';
+        const PROXY = 'https://corsproxy.io/?'; 
+        let isFetching = false;
+
+        async function updateDashboard() {
+            if (isFetching) return;
+            isFetching = true;
+            
+            const statusEl = document.getElementById('status');
+            try {
+                const response = await fetch(PROXY + encodeURIComponent(API_URL));
+                const data = await response.json();
+
+                document.getElementById('meta-info').innerText = `${data.meta.tac_gia} | ${data.meta.phien_ban}`;
+                document.getElementById('phien').innerText = `#${data.phien_hien_tai}`;
+                document.getElementById('dung-sai').innerText = data.lich_su_dung_sai;
+                document.getElementById('cua-vao').innerText = data.lenh_chot_phien_toi.cua_vao;
+                document.getElementById('ly-do').innerText = data.lenh_chot_phien_toi.ly_do;
+                
+                const cua = data.lenh_chot_phien_toi.cua_vao;
+                document.getElementById('cua-vao').className = `text-5xl font-black my-4 ${cua === 'Tài' ? 'text-red-500' : (cua === 'Xỉu' ? 'text-blue-500' : 'text-gray-500')}`;
+
+                statusEl.className = "w-3 h-3 rounded-full bg-green-500";
+            } catch (err) {
+                statusEl.className = "w-3 h-3 rounded-full bg-red-500";
+            } finally {
+                isFetching = false;
+            }
+        }
+
+        // Cập nhật mỗi 1000ms (1 giây)
+        setInterval(updateDashboard, 1000);
+        updateDashboard();
+    </script>
+</body>
+</html>
